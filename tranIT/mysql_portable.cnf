@@ -1,0 +1,24 @@
+# ================
+# PORTABLE EDITION
+# ================
+# ------------
+# MySQL Server
+# ------------
+[mysqld]
+#user            = mysql
+bind_address    = 0.0.0.0
+port            = 3306
+pid-file        = ../../var/mysqld.pid
+socket          = ../var/mysqld.sock
+basedir         = ../
+datadir         = ../../data
+lc-messages-dir	= ../../share
+log_error       = ../var/error.log
+tmpdir          = ../var
+
+key_buffer_size = 32M
+max_allowed_packet = 16M
+thread_cache_size = 8
+thread_stack = 192K
+query_cache_size = 64M
+query_cache_limit = 2M

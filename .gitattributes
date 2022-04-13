@@ -1,0 +1,13 @@
+# ************************************************************
+# GIT Attributes Configurations
+# ************************************************************
+# Set default behavior.
+*   text=auto
+
+
+# Windows related files.
+*.vcproj    text eol=crlf
+
+
+# Unix related files.
+*.sh    text eol=lf
