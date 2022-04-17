@@ -33,7 +33,8 @@ trap Cancel INT
 # ========================================
 # Display help.
 function Help() {
-    echo "Convert video to H264."
+    echo -e "\033[4mConvert video to H264 with FFMPEG.\033[m"
+    echo "Platform: $(uname) - ${OSTYPE}"
     echo
     echo "Syntax: ${scriptName} [-a|h|-s|-t]"
     echo "Options:"
@@ -76,7 +77,7 @@ function RunFFMPEG() {
     fi
     params="${params} ${2}"
     PrintInfo "- Run ----------------"
-    PrintInfo " ffmepg ${params}"
+    PrintInfo "ffmepg ${params}"
     PrintInfo "----------------------"
     ffmpeg ${params}
 }
@@ -116,9 +117,9 @@ function Cancel() {
 # ========================================
 # Main
 # ========================================
-echo -e "==========================="
-echo -e "= Convert Video Into H264 ="
-echo -e "==========================="
+echo "==========================="
+echo "= Convert Video Into H264 ="
+echo "==========================="
 
 
 # Working variables.
@@ -142,7 +143,7 @@ do
         t)  # Target [file|path].
             target=${OPTARG};;
         :)  PrintError "Missing argument: -${OPTARG}\n\n" >&2; ExitAbnormal;;
-        \?) PrintError "Illegal option: -${OPTARG}\n\n" >&2;ExitAbnormal;;
+        \?) PrintError "Unknown option: -${OPTARG}\n\n" >&2; ExitAbnormal;;
     esac
 done
 
@@ -155,7 +156,7 @@ fi
 
 # Require arguments.
 if [ "$source" = "" ]; then
-    PrintError "(-s) Missing source."
+    PrintError "(-s) Missing source.\n\n"
     Help
     exit
 fi
