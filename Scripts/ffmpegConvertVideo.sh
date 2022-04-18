@@ -41,7 +41,7 @@ function Help() {
     echo "                  - an       => No audio."
     echo "                  - [Codec]  => Assume valid codec to use. (Default: copy)"
     echo "  -e  {value}  Extra FFMPEG parameters."
-    echo "  -f  {value}  Format container. (Default: mp4)"
+    echo "  -f  {value}  Format container."
     echo "                  - list     => Print supported formats."
     echo "  -h           Print this Help."
     echo "  -l           Print supported codecs."
@@ -61,7 +61,10 @@ function Help() {
     echo "${scriptName} -f webm -s SourcePath -t OutputPath"
     echo
     echo "Choosing codes and extra parameters."
-    echo "${scriptName} -s SourceFile.mp4 -t OutFile.mp4 -a mp3 -v libx264 -e \"-b:v 2500k -bufsize 5000k\""
+    echo "${scriptName} -f mp4 -s SourceFile.mp4 -t OutFile.mp4 -a mp3 -v libx264 -e \"-b:v 2500k -bufsize 5000k\""
+    echo
+    echo "Convert into PNG images."
+    echo "${scriptName} -s SourceFile.mp4 -t \"OutputFile_%04d.png\" -a an"
     echo
 }
 
@@ -76,7 +79,7 @@ function CheckFlags() {
     PrintInfo "Selected Options:"
 
     if [ "${flagAudio}" = "an" ]; then
-        PrintWarning "  * Remove Audio Track"
+        PrintInfo "  * Remove Audio Track"
         flagAudio="-an"
     elif [ ! "${flagAudio}" = "" ]; then
         PrintInfo "  * Select Audio Codec: ${flagAudio}"
@@ -84,7 +87,7 @@ function CheckFlags() {
     fi
 
     if [ "${flagVideo}" = "vn" ]; then
-        PrintWarning "  * Remove Video Track"
+        PrintInfo "  * Remove Video Track"
         flagVideo="-vn"
     elif [ ! "${flagVideo}" = "" ]; then
         PrintInfo "  * Select Video Codec: ${flagVideo}"
@@ -101,7 +104,10 @@ function CheckFlags() {
 #   1   => Source file.
 #   2   => Target file.
 function RunFFMPEG() {
-    params="-i ${1} -f ${flagFormat}"
+    params="-i ${1}"
+    if [ ! "${flagFormat}" = "" ]; then
+        params="${params} -f ${flagFormat}"
+    fi
     if [ ! "${flagAudio}" = "" ]; then
         params="${params} ${flagAudio}"
     fi
@@ -165,7 +171,7 @@ target=""
 #flagVideo="-c:v copy"
 flagAudio=""
 flagExtra=""
-flagFormat="mp4"
+flagFormat=""
 flagVideo=""
 
 
