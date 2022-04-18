@@ -40,6 +40,7 @@ function Help() {
     echo "  -a  {value}  Audio options."
     echo "                  - an       => No audio."
     echo "                  - [Codec]  => Assume valid codec to use. (Default: copy)"
+    echo "  -e  {value}  Extra FFMPEG parameters."
     echo "  -f  {value}  Format container. (Default: mp4)"
     echo "                  - list     => Print supported formats."
     echo "  -h           Print this Help."
@@ -59,8 +60,8 @@ function Help() {
     echo "Convert files in the source directory and output into destination path."
     echo "${scriptName} -f webm -s SourcePath -t OutputPath"
     echo
-    echo "Choosing codes."
-    echo "${scriptName} -s SourceFile.mp4 -t OutFile.mp4 -a mp3 -v libx264"
+    echo "Choosing codes and extra parameters."
+    echo "${scriptName} -s SourceFile.mp4 -t OutFile.mp4 -a mp3 -v libx264 -e \"-b:v 2500k -bufsize 5000k\""
     echo
 }
 
@@ -89,6 +90,10 @@ function CheckFlags() {
         PrintInfo "  * Select Video Codec: ${flagVideo}"
         flagVideo="-c:v ${flagVideo}"
     fi
+
+    if [ ! "${flagExtra}" = "" ]; then
+        PrintInfo "  * Extra Parameters: ${flagExtra}"
+    fi
 }
 
 # Run FFMPEG.
@@ -102,6 +107,9 @@ function RunFFMPEG() {
     fi
     if [ ! "${flagVideo}" = "" ]; then
         params="${params} ${flagVideo}"
+    fi
+    if [ ! "${flagExtra}" = "" ]; then
+        params="${params} ${flagExtra}"
     fi
     params="${params} ${2}"
     PrintInfo "- Run ----------------"
@@ -156,12 +164,13 @@ target=""
 #flagAudio="-c:a copy"
 #flagVideo="-c:v copy"
 flagAudio=""
+flagExtra=""
 flagFormat="mp4"
 flagVideo=""
 
 
 # Parsing arguments.
-while getopts ":a:f:hls:t:v:" flag
+while getopts ":a:e:f:hls:t:v:" flag
 do
     case "${flag}" in
         h)  # Display help.
@@ -169,6 +178,8 @@ do
             exit;;
         a)  # Audio.
             flagAudio=${OPTARG};;
+        e)  # Extra FFMPEG parameters.
+            flagExtra=${OPTARG};;
         f)  # Format.
             flagFormat=${OPTARG};;
         l)  # List of codecs.
