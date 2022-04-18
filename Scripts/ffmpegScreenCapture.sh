@@ -32,7 +32,7 @@ colClear="\033[0m"
 # ========================================
 # Display help.
 function Help() {
-    echo -e "\033[4mScreen Capture with FFMPEG.\033[m"
+    echo -e "\033[4minputID Capture with FFMPEG.\033[m"
     echo "Platform: $(uname) - ${OSTYPE}"
     echo
     echo "Options:"
@@ -40,23 +40,24 @@ function Help() {
     echo "  --output=*"
     echo "  -h                  Print this Help."
     echo "  --help."
-    echo "  -s={value}      (*) Screen ID."
-    echo "  --screen=*"
-    if [ "$(uname)" = "Darwin" ]; then
-        echo "                      ID: 0 => May be the webcam."
-        echo "                      ID: 1 => May be the screen."
-    fi
+    echo "  -i={value}      (*) Input (screen / audio) ID."
+    echo "  --id=*                  Use '--list_ids' to display available ids."
+    echo "  -l                  List of input IDs."
+    echo "  --list_ids"
     echo "  -r={value}          Resolution."
     echo "  --resolution=*"
     echo
     echo "* Required argument."
     echo
-    echo "Example:"
+    echo "Examples:"
     echo "Capture with specific resolution."
     if [ "$(uname)" = "Darwin" ]; then
-        echo "${scriptName} -s 1 -o OutputFile.mp4 -r 640x480"
+        echo "${scriptName} -i 1 -o OutputFile.mp4 -r 640x480"
+        echo
+        echo "Capture screen and audio."
+        echo "${scriptName} -i 1:2 -o OutputFile.mp4 -r 640x480"
     else
-        echo "${scriptName} -s 0.0 -o OutputFile.mp4 -r 640x480"
+        echo "${scriptName} -i 0.0 -o OutputFile.mp4 -r 640x480"
     fi
     echo
 }
@@ -71,14 +72,14 @@ function ExitAbnormal() {
 # Run FFMPEG.
 function RunFFMPEG() {
     # Setup parameters.
-    input=""
+    format=""
     if [ "$(uname)" = "Darwin" ]; then
-        input="avfoundation -i ${screen}"
+        format="avfoundation -i ${inputID}"
     else
-        input="x11grab -i :${screen}"
+        format="x11grab -i :${inputID}"
     fi
 
-    params="-f ${input} -r 25 -pix_fmt yuv420p -c:v libx264 -preset ultrafast"
+    params="-f ${format} -r 25 -pix_fmt yuv420p -c:v libx264 -preset ultrafast"
 
     if [ ! "${resolution}" = "" ]; then
         params="${params} -s ${resolution}"
@@ -132,7 +133,7 @@ echo "=================="
 # Working variables.
 outputFile=""
 resolution=""
-screen=""
+inputID=""
 
 
 # Parsing arguments.
@@ -149,6 +150,20 @@ do
             Help
             exit
         ;;
+        # Input ID.
+        -i=*|--id=*)
+            inputID="${i#*=}"
+            shift
+        ;;
+        # List IDs.
+        -l|--list_ids)
+            if [ "$(uname)" = "Darwin" ]; then
+                ffmpeg -list_devices true -f avfoundation -i dummy
+            else
+                ffmpeg -list_devices true -f x11grab -i dummy
+            fi
+            exit
+        ;;
         # Output file.
         -o=*|--output=*)
             outputFile="${i#*=}"
@@ -157,11 +172,6 @@ do
         # Resolution.
         -r=*|--resolution=*)
             resolution="${i#*=}"
-            shift
-        ;;
-        # Screen ID.
-        -s=*|--screen=*)
-            screen="${i#*=}"
             shift
         ;;
         # Unknown option.
@@ -181,8 +191,8 @@ done
 #            outputFile=${OPTARG};;
 #        r)  # Resolution.
 #            resolution=${OPTARG};;
-#        s)  # Screen.
-#            screen=${OPTARG};;
+#        s)  # inputID.
+#            inputID=${OPTARG};;
 #        :)  PrintError "Missing argument: -${OPTARG}\n\n" >&2; ExitAbnormal;;
 #        \?) PrintError "Unknown option: -${OPTARG}\n\n" >&2; ExitAbnormal;;
 #    esac
@@ -195,8 +205,8 @@ if [ "$outputFile" = "" ]; then
     error="1"
 fi
 
-if [ "$screen" = "" ]; then
-    PrintError "(-s) Missing screen ID."
+if [ "$inputID" = "" ]; then
+    PrintError "(-i) Missing inputID ID."
     error="1"
 fi
 
