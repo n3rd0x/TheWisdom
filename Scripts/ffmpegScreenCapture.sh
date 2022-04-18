@@ -35,25 +35,24 @@ function Help() {
     echo -e "\033[4mScreen Capture with FFMPEG.\033[m"
     echo "Platform: $(uname) - ${OSTYPE}"
     echo
-    echo "Syntax: ${scriptName} [-o|h|-s|-r]"
     echo "Options:"
-    echo "  o* Output file."
-    echo "  h  Print this Help."
-    echo "  s* Screen ID."
+    echo "  -o* {value}     Output file."
+    echo "  -h  {value}     Print this Help."
+    echo "  -s* {value}     Screen ID."
     if [ "$(uname)" = "Darwin" ]; then
-        echo "      ID: 0 => May be the webcam."
-        echo "      ID: 1 => May be the screen."
+        echo "                      ID: 0 => May be the webcam."
+        echo "                      ID: 1 => May be the screen."
     fi
-    echo "  r  Resolution."
+    echo "  -r  {value}     Resolution."
     echo
     echo "* Required argument."
     echo
     echo "Example:"
     echo "Capture with specific resolution."
     if [ "$(uname)" = "Darwin" ]; then
-        echo "${scriptName} -s 1 -o OutFile.mp4 -r 640x480"
+        echo "${scriptName} -s 1 -o OutputFile.mp4 -r 640x480"
     else
-        echo "${scriptName} -s 0.0 -o OutFile.mp4 -r 640x480"
+        echo "${scriptName} -s 0.0 -o OutputFile.mp4 -r 640x480"
     fi
 }
 

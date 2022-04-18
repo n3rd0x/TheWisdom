@@ -33,24 +33,35 @@ trap Cancel INT
 # ========================================
 # Display help.
 function Help() {
-    echo -e "\033[4mConvert video to H264 with FFMPEG.\033[m"
+    echo -e "\033[4mConvert video with FFMPEG.\033[m"
     echo "Platform: $(uname) - ${OSTYPE}"
     echo
-    echo "Syntax: ${scriptName} [-a|h|-s|-t]"
     echo "Options:"
-    echo "  a  Remove audio track."
-    echo "  h  Print this Help."
-    echo "  s* Source [file|path]."
-    echo "  t  Target [file|path]."
+    echo "  -a  {value}  Audio options."
+    echo "                  - an       => No audio."
+    echo "                  - [Codec]  => Assume valid codec to use. (Default: copy)"
+    echo "  -f  {value}  Format container. (Default: mp4)"
+    echo "                  - list     => Print supported formats."
+    echo "  -h           Print this Help."
+    echo "  -l           Print supported codecs."
+    echo "  -s* {value}  Source [file|path]."
+    echo "  -t  {value}  Target [file|path]."
+    echo "  -v  {value}  Video options."
+    echo "                  - vn       => No video."
+    echo "                  - [Codec]  => Assume valid codec to use. (Default: copy)"
     echo
     echo "* Required argument."
     echo
     echo "Examples:"
     echo "Convert a single file."
-    echo "${scriptName} -s MyFile.mp4 -t OutFile.mp4"
+    echo "${scriptName} -f mp4 -s SourceFile.mp4 -t OutputFile.mp4"
     echo
     echo "Convert files in the source directory and output into destination path."
-    echo "${scriptName} -s MyPath -t OutPath"
+    echo "${scriptName} -f webm -s SourcePath -t OutputPath"
+    echo
+    echo "Choosing codes."
+    echo "${scriptName} -s SourceFile.mp4 -t OutFile.mp4 -a mp3 -v libx264"
+    echo
 }
 
 # Exit with error.
@@ -59,10 +70,24 @@ function ExitAbnormal() {
     exit 1
 }
 
-# Check audio flag.
-function AudioFlag() {
-    if [ "${flagAudio}" = "-an" ]; then
-        PrintWarning "* Remove Audio Track"
+# Check flags.
+function CheckFlags() {
+    PrintInfo "Selected Options:"
+
+    if [ "${flagAudio}" = "an" ]; then
+        PrintWarning "  * Remove Audio Track"
+        flagAudio="-an"
+    elif [ ! "${flagAudio}" = "" ]; then
+        PrintInfo "  * Select Audio Codec: ${flagAudio}"
+        flagAudio="-c:a ${flagAudio}"
+    fi
+
+    if [ "${flagVideo}" = "vn" ]; then
+        PrintWarning "  * Remove Video Track"
+        flagVideo="-vn"
+    elif [ ! "${flagVideo}" = "" ]; then
+        PrintInfo "  * Select Video Codec: ${flagVideo}"
+        flagVideo="-c:v ${flagVideo}"
     fi
 }
 
@@ -71,9 +96,12 @@ function AudioFlag() {
 #   1   => Source file.
 #   2   => Target file.
 function RunFFMPEG() {
-    params="-i ${1} -f mp4 -c:v libx264"
+    params="-i ${1} -f ${flagFormat}"
     if [ ! "${flagAudio}" = "" ]; then
         params="${params} ${flagAudio}"
+    fi
+    if [ ! "${flagVideo}" = "" ]; then
+        params="${params} ${flagVideo}"
     fi
     params="${params} ${2}"
     PrintInfo "- Run ----------------"
@@ -117,42 +145,55 @@ function Cancel() {
 # ========================================
 # Main
 # ========================================
-echo "==========================="
-echo "= Convert Video Into H264 ="
-echo "==========================="
+echo "================="
+echo "= Convert Video ="
+echo "================="
 
 
 # Working variables.
 source=""
 target=""
 #flagAudio="-c:a copy"
+#flagVideo="-c:v copy"
 flagAudio=""
+flagFormat="mp4"
+flagVideo=""
 
 
 # Parsing arguments.
-while getopts ":ahs:t:" flag
+while getopts ":a:f:hls:t:v:" flag
 do
     case "${flag}" in
         h)  # Display help.
             Help
             exit;;
-        a)  # Remove audio track.
-            flagAudio="-an";;
+        a)  # Audio.
+            flagAudio=${OPTARG};;
+        f)  # Format.
+            flagFormat=${OPTARG};;
+        l)  # List of codecs.
+            ffmpeg -codecs; exit;;
         s)  # Source [file|path].
             source=${OPTARG};;
         t)  # Target [file|path].
             target=${OPTARG};;
+        v)  # Video.
+            flagVideo=${OPTARG};;
         :)  PrintError "Missing argument: -${OPTARG}\n\n" >&2; ExitAbnormal;;
         \?) PrintError "Unknown option: -${OPTARG}\n\n" >&2; ExitAbnormal;;
     esac
 done
 
 # Special cases.
-if [ "$1" = "" ] || [ "$1" = "?" ]; then
+if [ "${1}" = "" ] || [ "${1}" = "?" ]; then
     Help
     exit
 fi
 
+if [ "${flagFormat}" = "list" ]; then
+    ffmpeg -formats
+    exit
+fi
 
 # Require arguments.
 if [ "$source" = "" ]; then
@@ -176,7 +217,7 @@ if [ -f "${source}" ]; then
     echo "---------------------"
     echo "- Single Conversion -"
     echo "---------------------"
-    AudioFlag
+    CheckFlags
 
     if [ ! -f "${source}" ]; then
         PrintError "[${source}] file doesn't exists."
@@ -186,15 +227,15 @@ if [ -f "${source}" ]; then
     # If destination is not specified, append suffix to output.
     if [ "${target}" = "" ]; then
         target="${source%.*}"
-        if [ "${source}" = "${target}.mp4" ]; then
-            target="${target}_Converted.mp4"
+        if [ "${source}" = "${target}.${flagFormat}" ]; then
+            target="${target}_Converted.${flagFormat}"
             PrintWarning "File exists, make new output name."
             PrintWarning "  => ${target}"
         else
-            target="${target}.mp4"
+            target="${target}.${flagFormat}"
         fi
 
-        PrintWarning "Set destination as: [${target}]"
+        PrintWarning "New target: ${target}"
     fi
 
     #ffmpeg -i ${source} -f mp4 -vcodec libx264 ${flagAudio} ${target}
@@ -210,7 +251,7 @@ if [ -d "${source}" ]; then
     echo "-----------------------"
     echo "- Multiple Conversion -"
     echo "-----------------------"
-    AudioFlag
+    CheckFlags
 
     if [ ! -d "${source}" ]; then
         PrintError "[${source}] directory doesn't exists."
@@ -223,7 +264,7 @@ if [ -d "${source}" ]; then
 
     if [ ! "${target}" = "" ]; then
         if [ ! -d "${target}" ]; then
-            PrintInfo "Creating output directory: [${target}]"
+            PrintInfo "Creating output directory: ${target}"
             mkdir "${target}"
         fi
 
@@ -233,12 +274,25 @@ if [ -d "${source}" ]; then
     fi
 
 
+    FILTERS="mov mp4 webm"
     FILES="${source}/*"
     for f in ${FILES}
     do
         ext="${f#*.}"
         PrintInfo "Processing [${f}]...."
-        if [ ${ext} = "mov" ] || [ ${ext} = "mp4" ]; then
+
+        # Skip not video files.
+        skip="1"
+        for e in ${FILTERS}
+        do
+            if [ "${e}" = "${ext}" ]; then
+                skip="0"
+                break
+            fi
+        done
+
+        # Process conversion if valid.
+        if [ ${skip} = "0" ]; then
             # Get only file name if target is specified.
             if [ "${target}" = "" ]; then
                 newTarget="${f%.*}"
@@ -246,12 +300,12 @@ if [ -d "${source}" ]; then
                 newTarget="${target}$(basename -- ${f%.*})"
             fi
 
-            if [ "$f" = "${newTarget}.mp4" ]; then
-                newTarget="${newTarget}_Converted.mp4"
+            if [ "$f" = "${newTarget}.${flagFormat}" ]; then
+                newTarget="${newTarget}_Converted.${flagFormat}"
                 PrintInfo "File exists, make new output name."
                 PrintInfo "  => ${newTarget}"
             else
-                newTarget="${newTarget}.mp4"
+                newTarget="${newTarget}.${flagFormat}"
             fi
 
             #ffmpeg -i ${f} -f mp4 -vcodec libx264 ${flagAudio} ${newTarget}
