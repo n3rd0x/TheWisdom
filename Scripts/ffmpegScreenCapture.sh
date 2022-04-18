@@ -36,14 +36,18 @@ function Help() {
     echo "Platform: $(uname) - ${OSTYPE}"
     echo
     echo "Options:"
-    echo "  -o* {value}     Output file."
-    echo "  -h  {value}     Print this Help."
-    echo "  -s* {value}     Screen ID."
+    echo "  -o={value}      (*) Output file."
+    echo "  --output=*"
+    echo "  -h                  Print this Help."
+    echo "  --help."
+    echo "  -s={value}      (*) Screen ID."
+    echo "  --screen=*"
     if [ "$(uname)" = "Darwin" ]; then
         echo "                      ID: 0 => May be the webcam."
         echo "                      ID: 1 => May be the screen."
     fi
-    echo "  -r  {value}     Resolution."
+    echo "  -r={value}          Resolution."
+    echo "  --resolution=*"
     echo
     echo "* Required argument."
     echo
@@ -54,6 +58,7 @@ function Help() {
     else
         echo "${scriptName} -s 0.0 -o OutputFile.mp4 -r 640x480"
     fi
+    echo
 }
 
 # Exit with error.
@@ -79,7 +84,7 @@ function RunFFMPEG() {
         params="${params} -s ${resolution}"
     fi
 
-    params="${params} ${outFile}"
+    params="${params} ${outputFile}"
 
     PrintInfo "- Run ----------------"
     PrintInfo "ffmepg ${params}"
@@ -125,37 +130,67 @@ echo "=================="
 
 
 # Working variables.
-outFile=""
+outputFile=""
 resolution=""
 screen=""
 
-# Parsing arguments.
-while getopts ":ho:r:s:" flag
-do
-    case "${flag}" in
-        h)  # Display help.
-            Help
-            exit;;
-        o)  # Output [file].
-            outFile=${OPTARG};;
-        r)  # Resolution.
-            resolution=${OPTARG};;
-        s)  # Screen.
-            screen=${OPTARG};;
-        :)  PrintError "Missing argument: -${OPTARG}\n\n" >&2; ExitAbnormal;;
-        \?) PrintError "Unknown option: -${OPTARG}\n\n" >&2; ExitAbnormal;;
-    esac
-done
 
-# Special cases.
+# Parsing arguments.
 if [ "$1" = "" ] || [ "$1" = "?" ]; then
     Help
     exit
 fi
 
+for i in "$@"
+do
+    case ${i} in
+        # Display help.
+        -h|--help)
+            Help
+            exit
+        ;;
+        # Output file.
+        -o=*|--output=*)
+            outputFile="${i#*=}"
+            shift
+        ;;
+        # Resolution.
+        -r=*|--resolution=*)
+            resolution="${i#*=}"
+            shift
+        ;;
+        # Screen ID.
+        -s=*|--screen=*)
+            screen="${i#*=}"
+            shift
+        ;;
+        # Unknown option.
+        *)
+            PrintError "Invalid option: ${i}\n\n" >&2; ExitAbnormal
+        ;;
+    esac
+done
+
+#while getopts ":ho:r:s:" flag
+#do
+#    case "${flag}" in
+#        h)  # Display help.
+#            Help
+#            exit;;
+#        o)  # Output [file].
+#            outputFile=${OPTARG};;
+#        r)  # Resolution.
+#            resolution=${OPTARG};;
+#        s)  # Screen.
+#            screen=${OPTARG};;
+#        :)  PrintError "Missing argument: -${OPTARG}\n\n" >&2; ExitAbnormal;;
+#        \?) PrintError "Unknown option: -${OPTARG}\n\n" >&2; ExitAbnormal;;
+#    esac
+#done
+
 # Require arguments.
 error="0"
-if [ "$outFile" = "" ]; then
+if [ "$outputFile" = "" ]; then
     PrintError "(-o) Missing output file."
     error="1"
 fi
