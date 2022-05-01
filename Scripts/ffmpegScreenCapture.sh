@@ -32,7 +32,7 @@ colClear="\033[0m"
 # ========================================
 # Display help.
 function Help() {
-    echo -e "\033[4minputID Capture with FFMPEG.\033[m"
+    echo -e "\033[4mScreen Capture with FFMPEG.\033[m"
     echo "Platform: $(uname) - ${OSTYPE}"
     echo
     echo "Options:"
@@ -41,7 +41,8 @@ function Help() {
     echo "  -h                  Print this Help."
     echo "  --help."
     echo "  -i={value}      (*) Input (screen / audio) ID."
-    echo "  --id=*                  Use '--list_ids' to display available ids."
+    echo "  --id=*                  Input format: [VideoID:AudioID]"
+    echo "                          Use '--list_ids' to display available ids."
     echo "  -l                  List of input IDs."
     echo "  --list_ids"
     echo "  -r={value}          Resolution."

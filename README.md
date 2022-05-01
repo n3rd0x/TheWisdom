@@ -1,2 +1,2 @@
-# The Wisdom Repository
-This repository contains useful documentation for generic computer and developer usage.
+# The Tool Repository
+This repository contains tools for generic computer and developer usage.
