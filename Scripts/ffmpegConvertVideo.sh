@@ -43,7 +43,7 @@ function Help() {
     echo "  -e  {value}  Extra FFMPEG parameters."
     echo "  -f  {value}  Format container."
     echo "                  - list     => Print supported formats."
-    echo "  -h           Print this Help."
+    echo "  -h           Print this help."
     echo "  -l           Print supported codecs."
     echo "  -s* {value}  Source [file|path]."
     echo "  -t  {value}  Target [file|path]."
